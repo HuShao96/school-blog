@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
+<head th:replace="~{fragments/header :: header}">
+</head>
+<body>
+<!-- Page Content -->
+<div class="container blog-content-container">
+    <div class="row">
+        <div class="col-md-2">
+            <a th:if="${isAuthority}" class="catalog-edit-picture" data-target="#flipFlop" role="button" data-toggle="modal"  data-th-attr="catalogId=${catalog.id}" >
+                <img src="/images/avatar-defualt.jpg" th:src="${catalog.catalogPicture} == null ? '/images/avatar-defualt.jpg' : ${catalog.catalogPicture}"  class="catalog-picture img-fluid rounded " alt="Responsive image">
+            </a>
+            <a th:if="${!isAuthority}">
+                <img src="/images/avatar-defualt.jpg" th:src="${catalog.catalogPicture} == null ? '/images/avatar-defualt.jpg' : ${catalog.catalogPicture}"  class="catalog-picture img-fluid rounded " alt="Responsive image">
+            </a>
+        </div>
+        <div class="col-md-3">
+            <h1 th:text="${catalog.catalogName}"></h1>
+        </div>
+        <div class="col-md-1 text-center" style="margin-top: 20px">关注:
+           <span class="text-primary">[[${catalog.attentionSize}]]</span>
+        </div>
+        <div class="col-md-1 text-center" style="margin-top: 20px">博客量:
+            <span class="text-primary">[[${blogSize}]]</span>
+        </div>
+
+        <div class="col-md-1">
+            <button class="btn btn-primary " th:if="${currentAttention}==null" id="submitAttention"><div class="fa fa-plus">&nbsp;&nbsp;关注</div></button>
+            <button class="btn btn-primary" th:if="${currentAttention}" th:attr="AttentionId=${currentAttention.AttentionId}" id="cancelAttention">取消关注</button>
+        </div>
+    </div>
+    <div class="row">
+        <!-- 博客 -->
+        <div class="col-md-8">
+            <!-- 工具栏 -->
+            <ul class="nav nav-tabs mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link " data-th-classappend="${order} eq 'new' ? 'active' : ''" href="javascript:void(0)" th:attr="url='/catalogs/'+${catalog.id}+'/blogs?order=new'">最新</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-th-classappend="${order} eq 'hot' ? 'active' : ''" href="javascript:void(0)" th:attr="url='/catalogs/'+${catalog.id}+'/blogs?order=hot'">最热</a>
+                </li>
+                <form class="form-inline mt-2 mt-md-0">
+                    <input class="form-control mr-sm-2" type="text" placeholder="搜索" id="keyword">
+                    <a href="javascript:void(0)" class="btn btn-outline-secondary my-2 my-sm-0" id="searchBlogs">
+                        <i class="fa fa-search" aria-hidden="true"></i>
+                    </a>
+                </form>
+
+            </ul>
+            <!-- Blog Post -->
+            <div id="mainContainer">
+                <div id="mainContainerRepleace">
+                    <div class="card mb-4" th:each="blog : ${blogList}">
+                        <div class="card-block">
+                            <h2 class="card-title">
+                                <a href="..." class="card-link" title="..."
+                                   th:href="'/u/' + ${blog.user.username} + '/blogs/'+ ${blog.id}"  th:title="${blog.user.username}" th:text="${blog.title}">
+                                </a>
+                            </h2>
+                            <p class="card-text" th:text="${blog.content}"></p>
+                            <div class="card-text">
+                                发表于 [[${#dates.format(blog.createTime, 'yyyy-MM-dd HH:mm')}]]
+                                <i class="fa fa-eye" aria-hidden="true">[[${blog.readSize}]]</i>
+                                <i class="fa fa-heart-o" aria-hidden="true">[[${blog.voteSize}]]</i>
+                                <i class="fa fa-comment-o" aria-hidden="true">[[${blog.commentSize}]]</i>
+                                <small class="float-right">[[${blog.getCatalog().getCatalogName()}]]</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:replace="~{fragments/page :: page}">...</div>
+                </div>
+            </div>
+        </div>
+        <!-- 右侧栏目 -->
+        <div class="col-md-4">
+            <div>
+                <!-- 热门用户 -->
+                <div class="card my-4">
+
+                </div>
+
+                <!-- 热门文章 -->
+                <div class="card my-4">
+                    <h5 class="card-header"><i class="fa fa-fire" aria-hidden="true"></i> 热门文章</h5>
+                    <ul class="list-group" th:each="hottblog , hotblogStat : ${hottest}" th:object="${hottblog}">
+                        <a  th:href="'/u/'+*{user.username} +'/blogs/'+ *{id}+'?catalogId='+*{catalog.id}" class="list-group-item">
+                            [[*{title}]]<span class="badge badge-pill" th:classappend="${hotblogStat.index} eq 0 ? 'badge-danger': (${hotblogStat.index} eq 1 ? 'badge-warning':(${hotblogStat.index} eq 2 ? 'badge-info':'badge-default'))">[[*{readSize}]]</span>
+                        </a>
+                    </ul>
+
+                </div>
+
+                <!-- 最新发布 -->
+                <div class="card my-4">
+                    <h5 class="card-header"><i class="fa fa-line-chart" aria-hidden="true"></i> 最新发布</h5>
+                    <div class="list-group">
+                        <ul class="list-group" th:each="newblog : ${newest}" th:object="${newblog}">
+                            <a  th:href="'/u/'+*{user.username} +'/blogs/'+ *{id}+'?catalogId='+*{catalog.id}" class="list-group-item" th:text="*{title}">
+                            </a>
+
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+
+<!-- The modal -->
+<div class="modal fade" id="flipFlop" tabindex="-1" role="dialog"
+     aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="modalLabel">编辑图片</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="pictureFormContainer"></div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" data-dismiss="modal" id="submitEditPicture">提交</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}">...</div>
+<!-- JavaScript -->
+<script th:inline="javascript">
+    var catalogid=[[${catalog.id}]]
+</script>
+<script src="../../js/userspace/attention.js" th:src="@{/js/userspace/attention.js}"></script>
+<script src="../../js/catalogs/main.js" th:src="@{/js/catalogs/main.js}"></script>
+</body>
+</html>

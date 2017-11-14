@@ -1,0 +1,104 @@
+<div class="bg-dark font-white">
+    <div class="input-group col-md-7 col-xl-6">
+        <input type="text" class="form-control" id="searchCatalogName" placeholder="输入栏目名称搜索">
+        <span class="input-group-btn">
+			<button class="btn btn-secondary" type="button" id="searchCatalogBtn">
+				<i class="fa fa-search" aria-hidden="true"></i>
+			</button>
+		</span>
+    </div>
+</div>
+
+<div id="catalogContainer" class="container">
+    <div id="catalogContainerRepleace" class="row">
+        <div th:each="catalog : ${catalogs}" class="col-xs-6 col-md-4">
+            <div class="form-check abc-checkbox abc-checkbox-primary">
+                <input th:if="${catalog.isAuthority=='true'}" class="form-check-input" th:id="checkbox+${catalog.catalogId}" type="checkbox"  th:attr="catalogId=${catalog.catalogId}" checked>
+                <input th:if="${catalog.isAuthority=='false'}" class="form-check-input" th:id="checkbox+${catalog.catalogId}" type="checkbox"  th:attr="catalogId=${catalog.catalogId}">
+                    <label class="form-check-label" th:for="checkbox+${catalog.catalogId}" th:text="${catalog.catalogName}"></label>
+            </div>
+        </div>
+    </div>
+    <div th:replace="~{fragments/page :: page}">...</div>
+</div>
+<script>
+    $(function () {
+        var catalogPageIndex;
+        var catalogPageSize; // 存储用于搜索
+        // 根据分类名称、页面索引、页面大小获取用户列表
+        function getCatalogByName(pageIndex, pageSize) {
+            axios({
+                url:"/manageAuthorization/"+ userId + "/catalogs",
+                params:{
+                    "async":true,
+                    "pageIndex":pageIndex,
+                    "pageSize":pageSize,
+                    "catalogName":$("#searchCatalogName").val()
+                }
+            }).then(function (response) {
+                $("#catalogContainer").html(response.data);
+            }).catch(function (error) {
+                toastr.error("error!");
+            });
+        }
+        // 分页
+        $.tbpage("#catalogContainer", function (pageIndex, pageSize) {
+            getCatalogByName(pageIndex, pageSize);
+            catalogPageIndex=pageIndex;
+            catalogPageSize = pageSize;
+        });
+        // 搜索
+        $("#searchCatalogBtn").click(function() {
+            getCatalogByName(0, catalogPageSize);
+        });
+        //选中checkbox事件
+        $('input:checkbox').click(function(){
+            var catalogId=$(this).attr("catalogId");
+            var csrfToken = $("meta[name='_csrf']").attr("content");
+            if(this.checked){
+                //添加权限
+                addAuthority(csrfToken,catalogId);
+            }
+            else {
+                //删除权限
+                cancelAuthority(csrfToken,catalogId);
+            }
+        });
+        //添加权限
+        function addAuthority(csrfToken,catalogId) {
+            axios({
+                method:"POST",
+                url:"/manageAuthorization/"+userId,
+                headers:{'X-CSRF-TOKEN':csrfToken,
+                    'Content-Type':"application/json; charset=utf-8"},
+                params:{catalogId:catalogId}
+            }).then(function (response) {
+                if (response.data.success) {
+                    toastr.success(response.data.message);
+                } else {
+                    toastr.error(response.data.message);
+                }
+            }).catch(function () {
+                toastr.error("error!");
+            });
+        }
+        //删除权限
+        function cancelAuthority(csrfToken,catalogId) {
+            axios({
+                method:"DELETE",
+                url:"/manageAuthorization/"+userId,
+                headers:{'X-CSRF-TOKEN':csrfToken,
+                    'Content-Type':"application/json; charset=utf-8"},
+                params:{catalogId:catalogId}
+            }).then(function (response) {
+                if (response.data.success) {
+                    toastr.success(response.data.message);
+                } else {
+                    toastr.error(response.data.message);
+                }
+            }).catch(function () {
+                toastr.error("error!");
+            });
+        }
+    });
+</script>

@@ -1,0 +1,119 @@
+<div class="card-header bg-dark font-white">
+    <div class="input-group col-md-7 col-xl-6">
+        <input type="text" class="form-control" id="searchName" placeholder="输入昵称进行搜索">
+        <span class="input-group-btn">
+			<button class="btn btn-secondary" type="button" id="searchNameBtn">
+				<i class="fa fa-search" aria-hidden="true"></i>
+			</button>
+		</span>
+    </div>
+</div>
+
+<div id="mainContainer" class="container">
+    <div id="mainContainerRepleace" class="row">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th data-field="id">ID</th>
+                <th data-field="username">账号</th>
+                <th data-field="nickname">昵称</th>
+                <th data-field="email">邮箱</th>
+                <th data-field="authorities">角色</th>
+                <th data-field="operation">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="user : ${adminList}">
+                <td th:text="${user.userId}">...</td>
+                <td th:text="${user.username}">...</td>
+                <td th:text="${user.nickname}">...</td>
+                <td th:text="${user.email}">...</td>
+                <td th:text="${user.authorities}">...</td>
+                <td>
+                    <div>
+                        <a class="btn btn-primary" data-toggle="modal" data-target="#flipFlop" role="button" id="editAuthority"
+                           data-th-attr="userId=${user.userId}">
+                            <i class="fa fa-plus" aria-hidden="true">权限编辑</i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div th:replace="~{fragments/page :: page}">...</div>
+
+    </div>
+</div>
+
+<!-- The modal -->
+<div class="modal fade" id="flipFlop" tabindex="-1" role="dialog"
+     aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="modalLabel">权限编辑</h4>
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+
+            </div>
+            <div class="modal-body" id="catalogFormContainer"></div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" data-dismiss="modal" id="submitEdit">提交</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script th:inline="javascript">
+    var userId;
+
+</script>
+
+
+<script>
+    $(function() {
+    var _pageSize; // 存储用于搜索
+    // 根据用户名、页面索引、页面大小获取用户列表
+    function getAdminByName(pageIndex, pageSize) {
+        axios({
+            url: "/manageAuthorization",
+            params:{
+                "async":true,
+                "pageIndex":pageIndex,
+                "pageSize":pageSize,
+                "nickname":$("#searchName").val()
+            }
+        }).then(function (response) {
+            $("#mainContainer").html(response.data);
+        }).catch(function (error) {
+            toastr.error("error!");
+        });
+    }
+
+    // 分页
+    $.tbpage("#mainContainer", function (pageIndex, pageSize) {
+        getAdminByName(pageIndex, pageSize);
+        _pageSize = pageSize;
+    });
+
+    // 搜索
+    $("#searchNameBtn").click(function() {
+        getAdminByName(0, _pageSize);
+    });
+
+    $("#editAuthority").click(function () {
+        userId=$(this).attr("userId");
+        axios({
+            method:'get',
+            url: "/manageAuthorization/"+ userId + "/catalogs"
+        }).then(function (response) {
+            $("#catalogFormContainer").html(response.data);
+        }).catch(function (error) {
+            toastr.error("error!");
+        });
+
+    });
+});
+</script>
