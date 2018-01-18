@@ -59,7 +59,7 @@ public class CatalogController {
         List<Catalog> catalogs=page.getContent();
         model.addAttribute("page",page);
         model.addAttribute("catalogs",catalogs);
-        return (async==true?"/admins/list ::#mainContainerRepleace":"/catalogs/list");
+        return (async==true?"/catalogs/list ::#mainContainerRepleace":"/catalogs/list");
     }
 
 
